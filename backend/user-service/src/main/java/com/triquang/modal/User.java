@@ -2,12 +2,23 @@ package com.triquang.modal;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
 public class User {
 
 	@Id
@@ -15,82 +26,25 @@ public class User {
 	private Long id;
 
 	private String fullName;
+	
+	@NotBlank(message = "Username is required")
+	private String username;
+	
+	@NotBlank(message = "Email is required")
+	@Email(message = "Email is not valid")
 	private String email;
+	
 	private String phone;
+	
+	@NotBlank(message = "Password is required")	
+	private String password;
+	
+	@NotBlank(message = "Role is required")
 	private String role;
+	
+	@CreationTimestamp
 	private LocalDateTime createAt;
+	
+	@UpdateTimestamp
 	private LocalDateTime updateAt;
-
-	public User() {
-		super();
-	}
-
-	public User(Long id, String fullName, String email, String phone, String role, LocalDateTime createAt,
-			LocalDateTime updateAt) {
-		super();
-		this.id = id;
-		this.fullName = fullName;
-		this.email = email;
-		this.phone = phone;
-		this.role = role;
-		this.createAt = createAt;
-		this.updateAt = updateAt;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getFullName() {
-		return fullName;
-	}
-
-	public void setFullName(String fullName) {
-		this.fullName = fullName;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getRole() {
-		return role;
-	}
-
-	public void setRole(String role) {
-		this.role = role;
-	}
-
-	public LocalDateTime getCreateAt() {
-		return createAt;
-	}
-
-	public void setCreateAt(LocalDateTime createAt) {
-		this.createAt = createAt;
-	}
-
-	public LocalDateTime getUpdateAt() {
-		return updateAt;
-	}
-
-	public void setUpdateAt(LocalDateTime updateAt) {
-		this.updateAt = updateAt;
-	}
-
 }
