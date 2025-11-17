@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/payment_service_db?useSSL=false&serverTimezone=UTC
+    username: root
+    password: 12345678
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: 8085
+
+razorpay:
+  api:
+    key: your_razorpay_api_key
+  secret:
+    key: your_razorpay_api_secret
+
+stripe:
+  api:
+    key: sk_test_51MbbJvBUdqNU4WI9vaQdJkNH9ih28qbTVagNc5xxw4AqHW48vSUJu08Ic60yn5Zqe6bSpbh6Dr7XozBDZwrZu1Sj00LZkpT9yr
+
+paypal:
+  client:
+    id: AYaIbxqeVjvpstcdwH8QarGDM19NOIdYkZf51Nn1HveUX80sn2NohPDPAJu2VT5KgyDcdi_LzCtThDHh
+    secret: ELJk1v8mt9RNSUimMPVHN7ysRCdwteA1lBrXBUetYxUeQzO1vn7VmgWn4VKL45n_DAr_E1pipBHmLl8f
+  mode: sandbox
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8070/eureka/
