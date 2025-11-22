@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  # =========================
+  # DATABASES
+  # =========================
+  user_service_db:
+    image: mysql:8
+    container_name: user_service_db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: user_service_db
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - salon-network
+
+  # =========================
+  # EUREKA SERVER
+  # =========================
+  eurekaserver:
+    image: triquang15/eureka-server:v1
+    container_name: eurekaserver
+    ports:
+      - "8070:8070"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://eurekaserver:8070/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - salon-network
+
+  # =========================
+  # MICROSERVICES
+  # =========================
+  userservice:
+    image: triquang15/user-service:v1
+    container_name: userservice
+    environment:
+      SPRING_APPLICATION_NAME: user-service
+      SPRING_DATASOURCE_URL: jdbc:mysql://user_service_db:3306/user_service_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12345678
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      EUREKA_INSTANCE_HOSTNAME: userservice
+    ports:
+      - "8080:8080"
+    depends_on:
+      user_service_db:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://userservice:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - salon-network
+
+  # =========================
+  # GATEWAY
+  # =========================
+  gateway:
+    image: triquang15/gateway-server:v1
+    container_name: gateway
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_APPLICATION_NAME: gateway-server
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eurekaserver:8070/eureka/
+      # Sử dụng route load balancing qua Eureka
+      ROUTE_USER_SERVICE: lb://USER-SERVICE
+    depends_on:
+      userservice:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://gateway:8000/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - salon-network
+
+networks:
+  salon-network:
+    driver: bridge
