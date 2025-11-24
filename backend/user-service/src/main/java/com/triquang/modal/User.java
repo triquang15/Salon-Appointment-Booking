@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import com.triquang.payload.UserRole;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,8 +42,8 @@ public class User {
 	@NotBlank(message = "Password is required")	
 	private String password;
 	
-	@NotBlank(message = "Role is required")
-	private String role;
+	@Column(nullable = false)
+	private UserRole role;
 	
 	@CreationTimestamp
 	private LocalDateTime createAt;
