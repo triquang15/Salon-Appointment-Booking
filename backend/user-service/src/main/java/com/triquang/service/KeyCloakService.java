@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.triquang.payload.Credential;
@@ -152,5 +153,32 @@ public class KeyCloakService {
 		} else {
 			throw new RuntimeException("Failed to assign role to user in Keycloak");
 		}
+	}
+	
+	public KeyCloakUserDto fetchUserProfile(String accessToken) throws Exception {
+	    String TOKEN_URL = KEYCLOAK_URL + "/realms/master/protocol/openid-connect/userinfo";
+
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.set("Authorization", accessToken);
+	    headers.setContentType(MediaType.APPLICATION_JSON);
+
+	    HttpEntity<Void> request = new HttpEntity<>(headers);
+
+	    try {
+	        var response = restTemplate.exchange(
+	                TOKEN_URL,
+	                HttpMethod.GET,
+	                request,
+	                KeyCloakUserDto.class);
+
+	        return response.getBody();
+
+	    } catch (HttpStatusCodeException ex) {
+	        System.err.println("Keycloak error: " + ex.getResponseBodyAsString());
+	        throw new Exception("Failed to get user info: " + ex.getStatusCode(), ex);
+
+	    } catch (Exception ex) {
+	        throw new Exception("Unexpected error while fetching Keycloak user info", ex);
+	    }
 	}
 }

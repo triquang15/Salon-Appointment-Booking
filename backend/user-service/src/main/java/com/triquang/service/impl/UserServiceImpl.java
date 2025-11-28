@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.triquang.exception.UserException;
 import com.triquang.modal.User;
+import com.triquang.payload.KeyCloakUserDto;
 import com.triquang.repository.UserRepository;
+import com.triquang.service.KeyCloakService;
 import com.triquang.service.UserService;
 
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
+	private final KeyCloakService cloakService;
 
 	@Override
 	public User createUser(User user) {
@@ -61,6 +64,12 @@ public class UserServiceImpl implements UserService {
 		existingUser.setRole(user.getRole());
 
 		return userRepository.save(existingUser);
+	}
+
+	@Override
+	public User getUserInfo(String token) throws Exception {
+		KeyCloakUserDto cloakUserDto = cloakService.fetchUserProfile(token);
+		return userRepository.findByEmail(cloakUserDto.getEmail());
 	}
 
 }

@@ -29,7 +29,7 @@ public class AuthController {
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginDto loginDto) throws Exception {
-		var authResponse = authService.login(loginDto.getUsername(), loginDto.getPassword());
+		var authResponse = authService.login(loginDto.getEmail(), loginDto.getPassword());
 		return ResponseEntity.ok(authResponse);
 	}
 
