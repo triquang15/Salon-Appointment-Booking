@@ -8,14 +8,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.triquang.payload.SalonDto;
 import com.triquang.payload.SalonMapper;
-import com.triquang.payload.UserDto;
 import com.triquang.service.SalonService;
+import com.triquang.service.client.UserFeignClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,23 +26,22 @@ import lombok.RequiredArgsConstructor;
 public class SalonController {
 
 	private final SalonService salonService;
+	private final UserFeignClient feignClient;
 
 	@PostMapping
-	public ResponseEntity<SalonDto> createSalon(@RequestBody SalonDto salonDto) {
-		UserDto userDto = new UserDto();
-		userDto.setId(1L);
-
+	public ResponseEntity<SalonDto> createSalon(@RequestBody SalonDto salonDto, @RequestHeader("Authorization") String token) throws Exception {
+		var userDto = feignClient.getUserInfo(token).getBody();
 		var salon = salonService.createSalon(salonDto, userDto);
-		SalonDto createdSalonDto = SalonMapper.toDto(salon);
+		
+		var createdSalonDto = SalonMapper.toDto(salon);
 		return ResponseEntity.ok(createdSalonDto);
 
 	}
 
 	@PutMapping("/{salonId}")
-	public ResponseEntity<SalonDto> updateSalon(@RequestBody SalonDto salonDto, @PathVariable Long salonId)
+	public ResponseEntity<SalonDto> updateSalon(@RequestBody SalonDto salonDto, @PathVariable Long salonId, @RequestHeader("Authorization") String token)
 			throws Exception {
-		UserDto userDto = new UserDto();
-		userDto.setId(1L);
+		var userDto = feignClient.getUserInfo(token).getBody();
 
 		var salon = salonService.updateSalon(salonDto, userDto, salonId);
 		return ResponseEntity.ok(SalonMapper.toDto(salon));
@@ -68,8 +68,12 @@ public class SalonController {
 	}
 
 	@GetMapping("/owner/{ownerId}")
-	public ResponseEntity<List<SalonDto>> getSalonsByOwnerId(@PathVariable Long ownerId) {
-		var salons = salonService.getSalonsByOwnerId(ownerId);
+	public ResponseEntity<List<SalonDto>> getSalonsByOwnerId(@RequestHeader("Authorization") String token) throws Exception {
+		var userDto = feignClient.getUserInfo(token).getBody();
+		if(userDto == null) {
+			throw new Exception("User not found from token");
+		}
+		var salons = salonService.getSalonsByOwnerId(userDto.getId());
 		List<SalonDto> salonDtos = salons.stream().map(SalonMapper::toDto).toList();
 		return ResponseEntity.ok(salonDtos);
 	}
