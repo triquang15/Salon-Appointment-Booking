@@ -67,7 +67,7 @@ public class SalonController {
 		return ResponseEntity.ok(salonDtos);
 	}
 
-	@GetMapping("/owner/{ownerId}")
+	@GetMapping("/owner")
 	public ResponseEntity<List<SalonDto>> getSalonsByOwnerId(@RequestHeader("Authorization") String token) throws Exception {
 		var userDto = feignClient.getUserInfo(token).getBody();
 		if(userDto == null) {

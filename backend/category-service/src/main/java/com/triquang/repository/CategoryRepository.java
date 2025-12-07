@@ -8,4 +8,6 @@ import com.triquang.modal.Category;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 	Set<Category> findBySalonId(Long salonId);
+
+	Category findByIdAndSalonId(Long id, Long salonId);
 }
