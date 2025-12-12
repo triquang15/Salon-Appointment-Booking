@@ -12,6 +12,7 @@ public class BookingMapper {
 		dto.setEndTime(booking.getEndTime());
 		dto.setOfferingIds(booking.getOfferingIds());
 		dto.setStatus(booking.getStatus());
+		dto.setTotalPrice(booking.getTotalPrice()); 
 		return dto;
 	}
 }
