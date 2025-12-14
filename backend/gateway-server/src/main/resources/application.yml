@@ -55,6 +55,11 @@ spring:
               predicates:
                 - Path=/api/notifications/**
 
+            - id: review-service
+              uri: lb://REVIEW-SERVICE
+              predicates:
+                - Path=/api/reviews/**
+
 eureka:
   instance:
     prefer-ip-address: true
