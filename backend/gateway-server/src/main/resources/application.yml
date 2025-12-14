@@ -50,9 +50,16 @@ spring:
               predicates:
                 - Path=/api/service-offering/**
 
+            - id: notifications-service
+              uri: lb://NOTIFICATIONS-SERVICE
+              predicates:
+                - Path=/api/notifications/**
+
 eureka:
   instance:
     prefer-ip-address: true
   client:
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone: http://localhost:8070/eureka/
