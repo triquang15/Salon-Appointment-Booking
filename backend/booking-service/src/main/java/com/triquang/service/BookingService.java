@@ -9,6 +9,7 @@ import com.triquang.domain.SalonReport;
 import com.triquang.modal.Booking;
 import com.triquang.payload.BookingRequest;
 import com.triquang.payload.OfferingDto;
+import com.triquang.payload.PaymentOrder;
 import com.triquang.payload.SalonDto;
 import com.triquang.payload.UserDto;
 
@@ -27,4 +28,6 @@ public interface BookingService {
 	List<Booking> getBookingByDate(LocalDateTime date, Long salonId);
 
 	SalonReport getSalonReport(Long salonId);
+
+	Booking bookingSuccess(PaymentOrder paymentOrder) throws Exception;
 }

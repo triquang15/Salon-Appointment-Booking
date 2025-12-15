@@ -20,11 +20,36 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
 
+  # ===============================
+  # RABBITMQ CONFIG
+  # ===============================
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+    listener:
+      simple:
+        concurrency: 1
+        max-concurrency: 5
+        prefetch: 10
+        default-requeue-rejected: false
+
+    template:
+      retry:
+        enabled: true
+        initial-interval: 1000
+        multiplier: 2.0
+        max-interval: 10000
+        max-attempts: 3
+
 eureka:
   instance:
     prefer-ip-address: true
   client:
-    register-with-eureka: true       
-    fetch-registry: true             
+    register-with-eureka: true
+    fetch-registry: true
     service-url:
       defaultZone: http://localhost:8070/eureka/

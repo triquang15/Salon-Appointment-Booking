@@ -14,6 +14,7 @@ import com.triquang.domain.SalonReport;
 import com.triquang.modal.Booking;
 import com.triquang.payload.BookingRequest;
 import com.triquang.payload.OfferingDto;
+import com.triquang.payload.PaymentOrder;
 import com.triquang.payload.SalonDto;
 import com.triquang.payload.UserDto;
 import com.triquang.repository.BookingRepository;
@@ -132,6 +133,13 @@ public class BookingServiceImpl implements BookingService {
 		report.setTotalRefunds(totalRefunds);
 		return report;
 
+	}
+
+	@Override
+	public Booking bookingSuccess(PaymentOrder paymentOrder) throws Exception {
+		Booking existingBooking = getBookingById(paymentOrder.getBookingId());
+		existingBooking.setStatus(BookingStatus.CONFIRMED);
+		return bookingRepository.save(existingBooking);
 	}
 
 }

@@ -21,8 +21,11 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.triquang.domain.PaymentMethod;
 import com.triquang.domain.PaymentOrderStatus;
+import com.triquang.message.BookingEventProducer;
+import com.triquang.message.NotificationEventProducer;
 import com.triquang.modal.PaymentOrder;
 import com.triquang.payload.BookingDto;
+import com.triquang.payload.PayPalLinkResponse;
 import com.triquang.payload.PaymentLinkResponse;
 import com.triquang.payload.UserDto;
 import com.triquang.repository.PaymentOrderRepository;
@@ -44,6 +47,12 @@ public class PaymentServiceImpl implements PaymentService {
 
 	@Value("${razorpay.secret.key}")
 	private String razorSecretKey;
+	
+	@Autowired
+	private BookingEventProducer bookingEventProducer;
+	
+	@Autowired
+	private NotificationEventProducer notificationEventProducer;
 
 	@Override
 	public PaymentLinkResponse createOrder(UserDto userDto, BookingDto bookingDto, PaymentMethod paymentMethod) {
@@ -95,8 +104,13 @@ public class PaymentServiceImpl implements PaymentService {
 		
 		else if (paymentMethod.equals(PaymentMethod.PAYPAL)) {
 		    try {
-		        String approveLink = createPayPalPaymentLink(userDto, amount, saved.getId());
-		        response.setPaymentLinkUrl(approveLink);
+				PayPalLinkResponse paypal = createPayPalPaymentLink(userDto, amount, saved.getId());
+
+				response.setPaymentLinkUrl(paypal.getApproveLink());
+
+				saved.setPaymentLinkId(paypal.getToken());
+				paymentRepository.save(saved);
+
 		    } catch (Exception e) {
 		        saved.setStatus(PaymentOrderStatus.FAILED);
 		        paymentRepository.save(saved);
@@ -188,7 +202,11 @@ public class PaymentServiceImpl implements PaymentService {
 	}
 
 	@Override
-	public String createPayPalPaymentLink(UserDto userDto, Long amountInCents, Long orderId) {
+	public PayPalLinkResponse createPayPalPaymentLink(
+	        UserDto userDto,
+	        Long amountInCents,
+	        Long orderId
+	) {
 	    try {
 	        double amount = amountInCents / 100.0;
 
@@ -210,19 +228,28 @@ public class PaymentServiceImpl implements PaymentService {
 
 	        RedirectUrls redirectUrls = new RedirectUrls();
 	        redirectUrls.setCancelUrl("http://localhost:3000/payment-failed/" + orderId);
-	        redirectUrls.setReturnUrl("http://localhost:3000/payment-sucess/" + orderId);
-
+	        redirectUrls.setReturnUrl("http://localhost:3000/payment-success/" + orderId);
 	        payment.setRedirectUrls(redirectUrls);
 
 	        Payment createdPayment = payment.create(apiContext);
 
+	        String approveUrl = null;
+	        String token = null;
+
 	        for (Links link : createdPayment.getLinks()) {
-	            if (link.getRel().equals("approval_url")) {
-	                return link.getHref();
+	            if ("approval_url".equalsIgnoreCase(link.getRel())) {
+	                approveUrl = link.getHref();
+	                token = link.getHref()
+	                        .substring(link.getHref().indexOf("token=") + 6);
+	                break;
 	            }
 	        }
 
-	        throw new RuntimeException("PayPal approval link not found!");
+	        if (approveUrl == null || token == null) {
+	            throw new RuntimeException("PayPal approval link not found");
+	        }
+
+	        return new PayPalLinkResponse(approveUrl, token);
 
 	    } catch (Exception e) {
 	        throw new RuntimeException("Error creating PayPal payment", e);
@@ -232,75 +259,74 @@ public class PaymentServiceImpl implements PaymentService {
 	@Override
 	public Boolean processPayment(PaymentOrder order, String paymentId, String paymentLinkId) {
 
-	    if (order.getStatus() != PaymentOrderStatus.PENDING) {
-	        return false;
-	    }
+		if (order.getStatus() != PaymentOrderStatus.PENDING) {
+			return false;
+		}
 
-	    try {
-	        // -------------------------//
-	        // 1. Razorpay
-	        // -------------------------//
-	        if (order.getPaymentMethod() == PaymentMethod.RAZORPAY) {
-	            RazorpayClient client = new RazorpayClient(razorApiKey, razorSecretKey);
-	            com.razorpay.Payment payment = client.payments.fetch(paymentId);
+		try {
+			boolean success = false;
 
-	            String status = payment.get("status");
-	            if ("captured".equals(status)) {
-	                order.setStatus(PaymentOrderStatus.COMPLETED);
-	                paymentRepository.save(order);
-	                return true;
-	            } else {
-	                order.setStatus(PaymentOrderStatus.FAILED);
-	                paymentRepository.save(order);
-	                return false;
-	            }
-	        }
+			// -------------------------//
+			// 1. Razorpay
+			// -------------------------//
+			if (order.getPaymentMethod() == PaymentMethod.RAZORPAY) {
+				RazorpayClient client = new RazorpayClient(razorApiKey, razorSecretKey);
+				com.razorpay.Payment payment = client.payments.fetch(paymentId);
+				success = "captured".equals(payment.get("status"));
+			}
 
-	        // -------------------------//
-	        // 2. Stripe
-	        // -------------------------//
-	        if (order.getPaymentMethod() == PaymentMethod.STRIPE) {
-	            Stripe.apiKey = stripeApiKey;
+			// -------------------------//
+			// 2. Stripe
+			// -------------------------//
+			else if (order.getPaymentMethod() == PaymentMethod.STRIPE) {
+				Stripe.apiKey = stripeApiKey;
+				Session session = Session.retrieve(paymentId);
+				success = "paid".equals(session.getPaymentStatus());
+			}
 
-	            Session session = Session.retrieve(paymentId);
-	            // session.getPaymentStatus()  = "paid" or "unpaid"
-	            if ("paid".equals(session.getPaymentStatus())) {
-	                order.setStatus(PaymentOrderStatus.COMPLETED);
-	                paymentRepository.save(order);
-	                return true;
-	            } else {
-	                order.setStatus(PaymentOrderStatus.FAILED);
-	                paymentRepository.save(order);
-	                return false;
-	            }
-	        }
+			// -------------------------//
+			// 3. PayPal
+			// -------------------------//
+			else if (order.getPaymentMethod() == PaymentMethod.PAYPAL) {
+				Payment payment = Payment.get(apiContext, paymentId);
+				success = "approved".equalsIgnoreCase(payment.getState());
+			}
 
-	        // -------------------------//
-	        // 3. PayPal
-	        // -------------------------//
-	        if (order.getPaymentMethod() == PaymentMethod.PAYPAL) {
+			// -------------------------//
+			// UPDATE DB
+			// -------------------------//
+			order.setStatus(success ? PaymentOrderStatus.COMPLETED : PaymentOrderStatus.FAILED);
+			paymentRepository.save(order);
 
-	            Payment payment = Payment.get(apiContext, paymentId);
+			//  RABBITMQ EVENTS 
 
-	            String state = payment.getState(); // "approved" | "failed"
+			// 1️ Notify Booking Service
+			bookingEventProducer.publish(order);
 
-	            if ("approved".equalsIgnoreCase(state)) {
-	                order.setStatus(PaymentOrderStatus.COMPLETED);
-	                paymentRepository.save(order);
-	                return true;
-	            } else {
-	                order.setStatus(PaymentOrderStatus.FAILED);
-	                paymentRepository.save(order);
-	                return false;
-	            }
-	        }
+			// 2️ Notify Notification Service
+			notificationEventProducer.publish(
+					order.getBookingId(),
+					order.getUserId(),
+					order.getSalonId()
+			);
 
-	    } catch (Exception e) {
-	        order.setStatus(PaymentOrderStatus.FAILED);
-	        paymentRepository.save(order);
-	        return false;
-	    }
+			return success;
 
-	    return false;
+		} catch (Exception e) {
+
+			order.setStatus(PaymentOrderStatus.FAILED);
+			paymentRepository.save(order);
+
+			// SEND FAILED EVENTS
+			bookingEventProducer.publish(order);
+
+			notificationEventProducer.publish(
+					order.getBookingId(),
+					order.getUserId(),
+					order.getSalonId()
+			);
+
+			return false;
+		}
 	}
 }
