@@ -1,11 +1,13 @@
-import logo from './logo.svg';
+import { ThemeProvider } from '@mui/material/styles';
 import './App.css';
+import greenTheme from './theme/greenTheme';
+import Home from './Customer/Home/Home';
 
 function App() {
   return (
-    <div className="App">
-        Hello World!
-    </div>
+    <ThemeProvider theme={greenTheme}>
+        <Home />
+    </ThemeProvider>
   );
 }
 
