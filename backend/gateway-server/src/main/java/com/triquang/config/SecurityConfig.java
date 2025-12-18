@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.ReactiveJwtAuthenticationConverterAdapter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.reactive.config.EnableWebFlux;
 
 import reactor.core.publisher.Mono;
@@ -17,45 +18,50 @@ import reactor.core.publisher.Mono;
 @EnableWebFlux
 public class SecurityConfig {
 
+    private final CorsConfigurationSource corsConfigurationSource;
+
+    public SecurityConfig(CorsConfigurationSource corsConfigurationSource) {
+        this.corsConfigurationSource = corsConfigurationSource;
+    }
+
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
-        http.csrf(ServerHttpSecurity.CsrfSpec::disable);
-
-        http.authorizeExchange(exchanges -> exchanges
+        http
+            .csrf(ServerHttpSecurity.CsrfSpec::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
+            .authorizeExchange(exchanges -> exchanges
                 .pathMatchers("/auth/**").permitAll()
                 .pathMatchers("/api/notifications/ws/**").permitAll()
-                .pathMatchers("/api/salons/**",
+                .pathMatchers(
+                        "/api/salons/**",
                         "/api/categories/**",
                         "/api/notifications/**",
                         "/api/payments/**",
                         "/api/bookings/**",
                         "/api/users/**",
                         "/api/service-offering/**",
-                        "/api/reviews/**")
-                .hasAnyRole("CUSTOMER", "SALON_OWNER", "ADMIN")
-
-                .pathMatchers("/api/categories/salon-owner/**",
+                        "/api/reviews/**"
+                ).hasAnyRole("CUSTOMER", "SALON_OWNER", "ADMIN")
+                .pathMatchers(
+                        "/api/categories/salon-owner/**",
                         "/api/service-offering/salon-owner/**",
-                        "/api/notifications/salon-owner")
-                .hasRole("SALON_OWNER")
-
+                        "/api/notifications/salon-owner"
+                ).hasRole("SALON_OWNER")
                 .anyExchange().authenticated()
-        );
-
-        http.oauth2ResourceServer(oauth -> 
+            )
+            .oauth2ResourceServer(oauth ->
                 oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(grantedAuthoritiesExtractor()))
-        );
+            );
 
         return http.build();
     }
 
     private Converter<Jwt, Mono<AbstractAuthenticationToken>> grantedAuthoritiesExtractor() {
-
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
-
         return new ReactiveJwtAuthenticationConverterAdapter(converter);
     }
 }
+
 
