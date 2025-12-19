@@ -2,6 +2,8 @@ import React from 'react'
 import SalonDetail from './SalonDetail'
 import { Button, Divider } from '@mui/material'
 import SalonServiceDetail from './SalonServiceDetail'
+import Review from '../../Customer/Review/Review'
+import AddReview from '../../Customer/Review/AddReview'
 
 const tabs = [{name: "All Services"}, {name: "Reviews"}, {name: "Add Review"}]
 
@@ -30,12 +32,12 @@ const SalonDetails = () => {
         )}
         {activeTab === "Reviews" && (
           <div>
-            <h2 className='text-2xl font-semibold mb-5'>Reviews</h2>
+            <Review />
           </div>
         )}
         {activeTab === "Add Review" && (
           <div>
-            <h2 className='text-2xl font-semibold mb-5'>Add Review</h2>
+            <AddReview />
           </div>
         )}
       </div>
