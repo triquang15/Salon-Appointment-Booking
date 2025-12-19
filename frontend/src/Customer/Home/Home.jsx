@@ -2,6 +2,7 @@ import React from 'react'
 import Banner from './Banner'
 import HomeServiceCard from './HomeServiceCard'
 import { services } from '../../assets/Data/services'
+import SalonList from '../../Salon/SalonList'
 
 const Home = () => {
     return (
@@ -29,6 +30,7 @@ const Home = () => {
             </section>
             <section>
                 <h2 className="text-3xl font-semibold text-center mb-6">Featured Salons</h2>    
+                <SalonList/>
             </section>
         </div>
     )

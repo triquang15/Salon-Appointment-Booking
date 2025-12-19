@@ -1,9 +1,10 @@
 import React from 'react'
+import SalonCard from './SalonCard'
 
 const SalonList = () => {
   return (
-    <div>
-        {/* Salon List Component */}
+    <div className='flex gap-5 justify-center flex-wrap'>
+        {[1, 1, 1, 1, 1, 1, 1].map((item) => <SalonCard/>)}
     </div>
   )
 }
