@@ -167,7 +167,7 @@ services:
 
 
 #  configserver:
-#    image: "zosh/configserver:v1"
+#    image: "salon-network/configserver:v1"
 #    ports:
 #      - "8071:8071"
 #    healthcheck:
@@ -185,7 +185,7 @@ services:
 #        limits:
 #          memory: 700m
 #    networks:
-#      - zosh
+#      - salon-network
 
   eurekaserver:
     image: "triquang15/eureka-server:v1"
@@ -490,5 +490,5 @@ services:
       - salon-network
 
 networks:
-  zosh:
+  salon-network:
     driver: "bridge"
