@@ -5,10 +5,11 @@ import {
   ChevronDownIcon
 } from '@heroicons/react/24/outline'
 import Button from '@mui/material/Button'
+import { useNavigate } from 'react-router-dom'
 
 const Navbar = () => {
 
-  // 🔐 Fake auth state (replace by real auth later)
+  // 🔐 Fake auth state (replace later)
   const isAuthenticated = true
   const user = {
     username: 'quang.dev',
@@ -16,30 +17,62 @@ const Navbar = () => {
   }
 
   const [open, setOpen] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between">
 
-        {/* Left */}
+        {/* ================= LEFT ================= */}
         <div className="flex items-center gap-10">
-          <h1 className="text-2xl font-bold text-green-600 cursor-pointer">
+
+          {/* Logo */}
+          <h1
+            className="text-2xl font-bold text-green-600 cursor-pointer"
+            onClick={() => navigate('/')}
+          >
             Salon<span className="text-pink-500">Booking</span>
           </h1>
 
+          {/* Desktop Menu */}
           <ul className="hidden md:flex items-center gap-6 text-gray-600 font-medium">
-            <li className="hover:text-green-600 cursor-pointer">Home</li>
-            <li className="hover:text-green-600 cursor-pointer">Services</li>
-            <li className="hover:text-green-600 cursor-pointer">Booking</li>
-            <li className="hover:text-green-600 cursor-pointer">Notification</li>
+            <li
+              className="hover:text-green-600 cursor-pointer"
+              onClick={() => navigate('/')}
+            >
+              Home
+            </li>
+
+            <li
+              className="hover:text-green-600 cursor-pointer"
+            >
+              Services
+            </li>
+
+            <li
+              className="hover:text-green-600 cursor-pointer"
+              onClick={() => navigate('/booking')}
+            >
+              Booking
+            </li>
+
+            <li
+              className="hover:text-green-600 cursor-pointer"
+              onClick={() => navigate('/notification')}
+            >
+              Notification
+            </li>
           </ul>
         </div>
 
-        {/* Right */}
+        {/* ================= RIGHT ================= */}
         <div className="flex items-center gap-4 relative">
 
-          {/* Notification */}
-          <div className="relative cursor-pointer">
+          {/* Notification Icon */}
+          <div
+            className="relative cursor-pointer"
+            onClick={() => navigate('/notification')}
+          >
             <BellIcon className="w-6 h-6 text-gray-600 hover:text-green-600" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
           </div>
@@ -56,7 +89,8 @@ const Navbar = () => {
             </Button>
           ) : (
             <div className="relative">
-              {/* User trigger */}
+
+              {/* User Trigger */}
               <div
                 onClick={() => setOpen(!open)}
                 className="flex items-center gap-2 cursor-pointer px-3 py-1 rounded-lg hover:bg-slate-100"
@@ -71,8 +105,8 @@ const Navbar = () => {
               {/* Dropdown */}
               {open && (
                 <div className="absolute right-0 mt-2 w-56 bg-white border rounded-xl shadow-lg overflow-hidden">
-                  
-                  {/* User info */}
+
+                  {/* User Info */}
                   <div className="px-4 py-3 border-b">
                     <p className="text-sm font-semibold text-gray-800">
                       {user.username}
@@ -82,24 +116,44 @@ const Navbar = () => {
                     </p>
                   </div>
 
-                  {/* Menu */}
+                  {/* Menu Items */}
                   <ul className="text-sm text-gray-600">
-                    <li className="px-4 py-2 hover:bg-slate-100 cursor-pointer">
+                    <li
+                      className="px-4 py-2 hover:bg-slate-100 cursor-pointer"
+                      onClick={() => {
+                        navigate('/salon-dashboard')
+                        setOpen(false)
+                      }}
+                    >
                       Become Partner
                     </li>
-                    <li className="px-4 py-2 hover:bg-slate-100 cursor-pointer">
-                      Help & Support
+
+                    <li
+                      className="px-4 py-2 hover:bg-slate-100 cursor-pointer"
+                      onClick={() => {
+                        navigate('/booking')
+                        setOpen(false)
+                      }}
+                    >
+                      My Booking
                     </li>
-                    <li className="px-4 py-2 hover:bg-slate-100 cursor-pointer text-red-500">
+
+                    <li
+                      className="px-4 py-2 hover:bg-slate-100 cursor-pointer text-red-500"
+                      onClick={() => {
+                        setOpen(false)
+                        console.log('Logout')
+                      }}
+                    >
                       Logout
                     </li>
                   </ul>
+
                 </div>
               )}
             </div>
           )}
         </div>
-
       </div>
     </nav>
   )
