@@ -51,7 +51,7 @@ const Navbar = () => {
 
             <li
               className="hover:text-green-600 cursor-pointer"
-              onClick={() => navigate('/booking')}
+              onClick={() => navigate('/bookings')}
             >
               Booking
             </li>
@@ -131,7 +131,7 @@ const Navbar = () => {
                     <li
                       className="px-4 py-2 hover:bg-slate-100 cursor-pointer"
                       onClick={() => {
-                        navigate('/booking')
+                        navigate('/bookings')
                         setOpen(false)
                       }}
                     >

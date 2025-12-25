@@ -8,18 +8,18 @@ import Navbar from '../Customer/Navbar/Navbar'
 import NotFound from '../ErrorPage/NotFound'
 
 const CustomerRoutes = () => {
-    return (
-        <div>
-            <Navbar />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/notification" element={<Notification />} />
-                <Route path="/salon/:id" element={<SalonDetails />} />
-                <Route path="*" element={<NotFound />} />
-            </Routes>
-        </div>
-    )
+  return (
+    <>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/bookings" element={<Booking />} />
+        <Route path="/notification" element={<Notification />} />
+        <Route path="/salon/:id" element={<SalonDetails />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  )
 }
 
 export default CustomerRoutes
