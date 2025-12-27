@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.triquang.payload.UserRole;
+import com.triquang.domain.UserRole;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

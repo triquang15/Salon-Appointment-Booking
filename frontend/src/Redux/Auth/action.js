@@ -1,142 +1,118 @@
-import api from "../../config/api";
+import axios from "axios";
 import {
-    REGISTER_REQUEST,
-    REGISTER_SUCCESS,
-    REGISTER_FAILURE,
-    LOGIN_SUCCESS,
-    LOGOUT,
-    FETCH_USER_FAILURE,
-    FETCH_USER_SUCCESS,
-    FETCH_USER_REQUEST,
-    LOGIN_FAILURE,
-    LOGIN_REQUEST,
+  REGISTER_REQUEST,
+  REGISTER_SUCCESS,
+  REGISTER_FAILURE,
+  LOGIN_REQUEST,
+  LOGIN_SUCCESS,
+  LOGIN_FAILURE,
+  GET_USER_REQUEST,
+  GET_USER_SUCCESS,
+  GET_USER_FAILURE,
+  LOGOUT,
+  GET_ALL_CUSTOMERS_REQUEST,
+  GET_ALL_CUSTOMERS_SUCCESS,
+  GET_ALL_CUSTOMERS_FAILURE,
 } from "./actionTypes";
+import api, { API_BASE_URL } from "../../config/api";
 
-// Handle user registration
 export const registerUser = (userData) => async (dispatch) => {
-    dispatch({ type: REGISTER_REQUEST });
-
-    try {
-        const response = await api.post("/auth/signup", userData);
-
-        const authData = response.data;
-
-        // Save tokens if returned
-        if (authData?.accessToken) {
-            localStorage.setItem("token", authData.accessToken);
-        }
-        if (authData?.refreshToken) {
-            localStorage.setItem("refreshToken", authData.refreshToken);
-        }
-
-        dispatch({
-            type: REGISTER_SUCCESS,
-            payload: authData,
-        });
-
-        console.log("Registered user:", authData);
-
-    } catch (error) {
-        dispatch({
-            type: REGISTER_FAILURE,
-            payload:
-                error.response?.data?.message ||
-                error.response?.data ||
-                error.message,
-        });
+  dispatch({ type: REGISTER_REQUEST });
+  console.log("auth action - ", userData)
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/signup`,
+      userData.userData
+    );
+    const user = response.data;
+    if (user.data?.jwt) {
+      localStorage.setItem("jwt", user.data.jwt);
+      userData.navigate("/");
     }
+    console.log("registerr :- ", user);
+    dispatch({ type: REGISTER_SUCCESS, payload: user });
+  } catch (error) {
+    console.log("error ", error);
+    dispatch({ type: REGISTER_FAILURE, payload: error });
+  }
 };
 
-export const loginUser = (loginData) => async (dispatch) => {
-    dispatch({ type: LOGIN_REQUEST });
+// Login action creators
+const loginRequest = () => ({ type: LOGIN_REQUEST });
+const loginSuccess = (user) => ({ type: LOGIN_SUCCESS, payload: user });
 
-    try {
-        const response = await api.post("/auth/login", loginData);
-        const authData = response.data;
-
-        // Save tokens
-        if (authData?.accessToken) {
-            localStorage.setItem("token", authData.accessToken);
-        }
-        if (authData?.refreshToken) {
-            localStorage.setItem("refreshToken", authData.refreshToken);
-        }
-
-        dispatch({
-            type: LOGIN_SUCCESS,
-            payload: authData,
-        });
-        console.log("Logged in user:", authData);
-
-    } catch (error) {
-        dispatch({
-            type: LOGIN_FAILURE,
-            payload:
-                error.response?.data?.message ||
-                error.response?.data ||
-                error.message,
-        });
+export const loginUser = (userData) => async (dispatch) => {
+  dispatch(loginRequest());
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/auth/login`,
+      userData.data
+    );
+    const user = response.data;
+    if (user.data?.jwt) {
+      localStorage.setItem("jwt", user.data.jwt);
+      if (user.data?.role === "ADMIN") {
+        userData.navigate("/admin");
+      } else if (user.data?.role === "SALON_OWNER") {
+        userData.navigate("/salon-dashboard");
+      }
+      else {
+        userData.navigate("/");
+      }
     }
+
+    console.log("login ", user);
+    dispatch(loginSuccess(user));
+  } catch (error) {
+    console.log("error ", error);
+    dispatch({ type: LOGIN_FAILURE, payload: error });
+  }
 };
 
-
-/* ================= FETCH CURRENT USER ================= */
-/**
- * Use this if you have /users/me or similar endpoint
- * If not available yet, you can skip this
- */
-export const fetchCurrentUser = () => async (dispatch) => {
-    dispatch({ type: FETCH_USER_REQUEST });
-
+//  get user from token
+export const getAllCustomers = (token) => {
+  return async (dispatch) => {
+    console.log("jwt - ", token);
+    dispatch({ type: GET_ALL_CUSTOMERS_REQUEST });
     try {
-        const response = await api.get("/api/users/profile");
-
-        dispatch({
-            type: FETCH_USER_SUCCESS,
-            payload: response.data,
-        });
-        console.log("Fetched user:", response.data);
-
+      const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const users = response.data;
+      dispatch({ type: GET_ALL_CUSTOMERS_SUCCESS, payload: users });
+      console.log("All Customers", users);
     } catch (error) {
-        dispatch({
-            type: FETCH_USER_FAILURE,
-            payload:
-                error.response?.data?.message ||
-                error.response?.data ||
-                error.message,
-        });
+      const errorMessage = error.message;
+      console.log(error);
+      dispatch({ type: GET_ALL_CUSTOMERS_FAILURE, payload: errorMessage });
     }
+  };
 };
 
-/* ================= LOGOUT ================= */
-export const logoutUser = () => (dispatch) => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
+export const getUser = (token) => {
+  return async (dispatch) => {
+    dispatch({ type: GET_USER_REQUEST });
+    try {
+      const response = await api.get(`/api/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const user = response.data;
+      dispatch({ type: GET_USER_SUCCESS, payload: user });
+      console.log("req User ", user);
+    } catch (error) {
+      const errorMessage = error.message;
+      dispatch({ type: GET_USER_FAILURE, payload: errorMessage });
+    }
+  };
+};
 
+export const logout = () => {
+  return async (dispatch) => {
     dispatch({ type: LOGOUT });
-};
-
-/* ================= REFRESH TOKEN ================= */
-export const refreshToken = () => async (dispatch) => {
-    const refreshToken = localStorage.getItem("refreshToken");
-
-    if (!refreshToken) {
-        dispatch({ type: LOGOUT });
-        return;
-    }
-
-    try {
-        const response = await api.get(`/auth/refresh-token/${refreshToken}`);
-        const authData = response.data;
-
-        localStorage.setItem("token", authData.accessToken);
-
-        dispatch({
-            type: LOGIN_SUCCESS,
-            payload: authData,
-        });
-
-    } catch (error) {
-        dispatch({ type: LOGOUT });
-    }
+    localStorage.clear();
+  };
 };

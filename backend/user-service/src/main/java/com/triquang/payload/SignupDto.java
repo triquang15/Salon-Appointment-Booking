@@ -1,5 +1,7 @@
 package com.triquang.payload;
 
+import com.triquang.domain.UserRole;
+
 import lombok.Data;
 
 @Data

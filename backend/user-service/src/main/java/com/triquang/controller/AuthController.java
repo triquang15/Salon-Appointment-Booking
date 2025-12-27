@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.triquang.payload.AuthResponse;
 import com.triquang.payload.LoginDto;
 import com.triquang.payload.SignupDto;
+import com.triquang.payload.response.ApiResponseBody;
 import com.triquang.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,20 +23,22 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/signup")
-	public ResponseEntity<AuthResponse> signUp(@RequestBody SignupDto signupDto) throws Exception {
-		var authResponse = authService.signup(signupDto);
-		return ResponseEntity.ok(authResponse);
+	public ResponseEntity<ApiResponseBody<AuthResponse>> signupHandler(@RequestBody SignupDto req) throws Exception {
+		var response = authService.signup(req);
+		return ResponseEntity.ok(new ApiResponseBody<>(true, "User created successfully", response));
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<AuthResponse> login(@RequestBody LoginDto loginDto) throws Exception {
-		var authResponse = authService.login(loginDto.getEmail(), loginDto.getPassword());
-		return ResponseEntity.ok(authResponse);
+	public ResponseEntity<ApiResponseBody<AuthResponse>> loginHandler(@RequestBody LoginDto req) throws Exception {
+		var response = authService.login(req.getEmail(), req.getPassword());
+		return ResponseEntity.ok(new ApiResponseBody<>(true, "User logged in successfully", response));
 	}
 
 	@GetMapping("/refresh-token/{refreshToken}")
-	public ResponseEntity<AuthResponse> refreshToken(@PathVariable String refreshToken) throws Exception {
+	public ResponseEntity<ApiResponseBody<AuthResponse>> refreshToken(@PathVariable String refreshToken)
+			throws Exception {
 		var authResponse = authService.refreshToken(refreshToken);
-		return ResponseEntity.ok(authResponse);
+		return ResponseEntity.ok(new ApiResponseBody<>(true, "refresh token received successfully", authResponse));
 	}
+
 }

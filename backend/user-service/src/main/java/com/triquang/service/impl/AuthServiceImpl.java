@@ -4,9 +4,12 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
+import com.triquang.config.JwtUtil;
+import com.triquang.domain.UserRole;
 import com.triquang.modal.User;
 import com.triquang.payload.AuthResponse;
 import com.triquang.payload.SignupDto;
+import com.triquang.payload.TokenResponse;
 import com.triquang.repository.UserRepository;
 import com.triquang.service.AuthService;
 import com.triquang.service.KeyCloakService;
@@ -21,14 +24,22 @@ public class AuthServiceImpl implements AuthService {
 
 	@Override
 	public AuthResponse login(String username, String password) throws Exception {
-		var tokenResponse = keyCloakService.getAdminAccessToken(username, password, "password", null);
 
-		var authResponse = new AuthResponse();
-		authResponse.setJwtToken(tokenResponse.getAccessToken());
-		authResponse.setRefreshToken(tokenResponse.getRefreshToken());
-		authResponse.setMessage("User logged in successfully");
+	    TokenResponse tokenResponse =
+	        keyCloakService.getAdminAccessToken(username, password, "password", null);
 
-		return authResponse;
+	    String accessToken = tokenResponse.getAccessToken();
+
+	    String role = JwtUtil.extractUserRole(accessToken);
+
+	    AuthResponse response = new AuthResponse();
+	    response.setTitle("Welcome Back " + username);
+	    response.setMessage("Login success");
+	    response.setJwt(accessToken);
+	    response.setRefreshToken(tokenResponse.getRefreshToken());
+	    response.setRole(UserRole.valueOf(role)); // CUSTOMER / ADMIN / STAFF
+
+	    return response;
 	}
 
 	@Override
@@ -36,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
 		var tokenResponse = keyCloakService.getAdminAccessToken(null, null, "refresh_token", refreshToken);
 
 		var authResponse = new AuthResponse();
-		authResponse.setJwtToken(tokenResponse.getAccessToken());
+		authResponse.setJwt(tokenResponse.getAccessToken());
 		authResponse.setRefreshToken(tokenResponse.getRefreshToken());
 		authResponse.setMessage("Token refreshed successfully");
 
@@ -60,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
 		var tokenResponse = keyCloakService.getAdminAccessToken(signupDto.getUsername(), signupDto.getPassword(), "password", null);
 
 		var authResponse = new AuthResponse();
-		authResponse.setJwtToken(tokenResponse.getAccessToken());
+		authResponse.setJwt(tokenResponse.getAccessToken());
 		authResponse.setRefreshToken(tokenResponse.getRefreshToken());
 		authResponse.setMessage("User registered successfully");
 		authResponse.setRole(signupDto.getRole());

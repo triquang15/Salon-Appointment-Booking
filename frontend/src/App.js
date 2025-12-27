@@ -13,14 +13,19 @@ import CategoryPage from './Salon/Category/CategoryPage'
 import Notifications from './Salon/Notification/Notifications'
 import Profile from './Salon/Profile/Profile'
 import Payment from './Salon/Payment/Payment'
+import Auth from './Auth/Auth'
 
 function App() {
   return (
     <ThemeProvider theme={greenTheme}>
       <Routes>
+        
+        <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
 
         {/* ADMIN ROUTES */}
         <Route path="/salon-dashboard" element={<SalonDashboard />}>
+          <Route path="bookings" element={<BookingTable />} />
           <Route index element={<BookingTable />} /> {/* default */}
           <Route path="bookings" element={<BookingTable />} />
           <Route path="services" element={<ServiceTable />} />
