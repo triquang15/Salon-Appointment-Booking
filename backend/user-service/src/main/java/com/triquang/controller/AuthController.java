@@ -38,7 +38,7 @@ public class AuthController {
 	public ResponseEntity<ApiResponseBody<AuthResponse>> refreshToken(@PathVariable String refreshToken)
 			throws Exception {
 		var authResponse = authService.refreshToken(refreshToken);
-		return ResponseEntity.ok(new ApiResponseBody<>(true, "refresh token received successfully", authResponse));
+		return ResponseEntity.ok(new ApiResponseBody<>(true, "Refresh token received successfully", authResponse));
 	}
 
 }

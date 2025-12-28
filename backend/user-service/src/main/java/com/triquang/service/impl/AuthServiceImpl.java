@@ -2,6 +2,7 @@ package com.triquang.service.impl;
 
 import java.time.LocalDateTime;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.triquang.config.JwtUtil;
@@ -21,7 +22,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthServiceImpl implements AuthService {
 	private final UserRepository userRepository;
 	private final KeyCloakService keyCloakService;
-
+	private final PasswordEncoder passwordEncoder; 
+	
 	@Override
 	public AuthResponse login(String username, String password) throws Exception {
 
@@ -60,7 +62,7 @@ public class AuthServiceImpl implements AuthService {
 
 		User user = new User();
 		user.setUsername(signupDto.getUsername());
-		user.setPassword(signupDto.getPassword());
+		user.setPassword(passwordEncoder.encode(signupDto.getPassword()));
 		user.setEmail(signupDto.getEmail());
 		user.setRole(signupDto.getRole());
 		user.setFullName(signupDto.getFullName());
